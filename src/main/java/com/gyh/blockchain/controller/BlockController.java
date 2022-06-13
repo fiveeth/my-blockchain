@@ -4,21 +4,28 @@ import com.gyh.blockchain.domain.BlockChain;
 import com.gyh.blockchain.domain.TransactionVO;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @description: 区块接口
- * @author: guoyihua
+ * @author: gyh
  * @date: 2022/06/10
  */
 @RestController
 public class BlockController {
     private final BlockChain blockChain = BlockChain.getInstance();
 
+    /**
+     * 发送交易
+     * @param transactionVO
+     * @return
+     */
     @RequestMapping("/transactions/new")
     public int newTransaction(@RequestBody TransactionVO transactionVO) {
         return blockChain.newTransactions(transactionVO.getSender(), transactionVO.getRecipient(), transactionVO.getAmount());
@@ -26,6 +33,7 @@ public class BlockController {
 
     /**
      * 挖矿
+     * @return
      */
     @RequestMapping("/mime")
     public Map<String, Object> mime() {
@@ -46,11 +54,36 @@ public class BlockController {
         return result;
     }
 
+    /**
+     * 获取整个区块链
+     * @return
+     */
     @RequestMapping("/chain")
     public Map<String, Object> chain() {
         Map<String, Object> result = new HashMap<String, Object>();
         result.put("chain", blockChain.getChain());
         result.put("length", blockChain.getChain().size());
         return result;
+    }
+
+    /**
+     * 节点注册
+     * @return
+     */
+    @RequestMapping("/register")
+    public Set<String> register(@RequestParam("address") String address) {
+        blockChain.registerNode(address);
+        return blockChain.getNodes();
+    }
+
+    @RequestMapping("/resolve")
+    public Boolean resolve() {
+        try {
+            blockChain.resolveConflicts();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 }
